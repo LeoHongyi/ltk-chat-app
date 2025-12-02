@@ -1,40 +1,25 @@
 // Next.js API Route - 处理聊天请求
-// 在 Cloudflare Workers 环境中，通过 env 获取 API_KEY 和 API_URL
 
-export const config = {
-  runtime: 'edge',
-};
-
-export default async function handler(request) {
+export default async function handler(req, res) {
   // 只允许 POST 请求
-  if (request.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' },
-    });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { message } = await request.json();
+    const { message } = req.body;
 
     if (!message) {
-      return new Response(JSON.stringify({ error: 'Message is required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return res.status(400).json({ error: 'Message is required' });
     }
 
     // 从环境变量获取 API 配置
-    // Cloudflare Workers 环境中通过 process.env 访问
     const apiUrl = process.env.API_URL;
     const apiKey = process.env.API_KEY;
 
     if (!apiUrl || !apiKey) {
       console.error('Missing API_URL or API_KEY environment variables');
-      return new Response(JSON.stringify({ reply: 'Server configuration error.' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return res.status(500).json({ reply: 'Server configuration error.' });
     }
 
     // GraphQL query 调用 AI
@@ -58,24 +43,15 @@ export default async function handler(request) {
 
     if (!response.ok) {
       console.error('API response error:', response.status, response.statusText);
-      return new Response(JSON.stringify({ reply: 'AI service unavailable.' }), {
-        status: 502,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return res.status(502).json({ reply: 'AI service unavailable.' });
     }
 
     const data = await response.json();
     const reply = data.data?.chat?.reply || 'No response from AI.';
 
-    return new Response(JSON.stringify({ reply }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return res.status(200).json({ reply });
   } catch (err) {
     console.error('Chat API error:', err);
-    return new Response(JSON.stringify({ reply: 'Error processing request.' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return res.status(500).json({ reply: 'Error processing request.' });
   }
 }
