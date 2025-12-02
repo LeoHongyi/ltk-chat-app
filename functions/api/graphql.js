@@ -26,10 +26,11 @@ export async function onRequestPost(context) {
   }
 }
 
-// 调用 OpenAI API
+// 调用 AI API (支持 OpenAI / DeepSeek 等)
 async function callOpenAI(prompt, env) {
   const apiKey = env.API_KEY;
   const apiUrl = env.API_URL || 'https://api.openai.com/v1/chat/completions';
+  const model = env.MODEL || 'gpt-3.5-turbo';
 
   if (!apiKey) {
     throw new Error('API_KEY not configured');
@@ -42,7 +43,7 @@ async function callOpenAI(prompt, env) {
       'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: 'gpt-3.5-turbo',
+      model: model,
       messages: [
         { role: 'system', content: 'You are a helpful assistant.' },
         { role: 'user', content: prompt },
@@ -52,7 +53,11 @@ async function callOpenAI(prompt, env) {
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('OpenAI API error:', response.status, errorText);
+    console.error('AI API error:', response.status, errorText);
+
+    if (response.status === 429) {
+      throw new Error('请求太频繁或额度已用完，请稍后再试');
+    }
     throw new Error(`AI service error: ${response.status}`);
   }
 
