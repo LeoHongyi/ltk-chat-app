@@ -5,10 +5,11 @@
   "scripts": {
     "dev": "next dev",
     "build:next": "next build",
-    "build": "npx opennextjs-cloudflare",
+    "build": "next build",
+    "build:worker": "npx opennextjs-cloudflare build",
     "start": "next start",
-    "preview": "npm run build && npx wrangler dev",
-    "deploy": "npm run build && npx wrangler deploy",
+    "preview": "npm run build:worker && npx wrangler dev",
+    "deploy": "npm run build:worker && npx wrangler deploy",
     "cf-typegen": "npx wrangler types"
   },
   "dependencies": {
