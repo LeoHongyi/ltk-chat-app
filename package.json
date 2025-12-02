@@ -5,7 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "npx opennextjs-cloudflare build",
-    "start": "next start"
+    "start": "next start",
+    "preview": "npm run build && npx wrangler dev",
+    "deploy": "npm run build && npx wrangler deploy",
+    "cf-typegen": "npx wrangler types"
   },
   "dependencies": {
     "next": "latest",
@@ -13,6 +16,7 @@
     "react-dom": "latest"
   },
   "devDependencies": {
-    "@opennextjs/cloudflare": "latest"
+    "@opennextjs/cloudflare": "latest",
+    "wrangler": "latest"
   }
 }
