@@ -6,12 +6,21 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "dev": "wrangler pages dev ./build",
-    "deploy": "npm run build && wrangler pages deploy ./build"
+    "deploy": "npm run build && wrangler pages deploy ./build",
+    "worker:install": "cd worker && npm install",
+    "worker:dev": "cd worker && wrangler dev",
+    "worker:deploy": "cd worker && wrangler deploy",
+    "dev:all": "npm run build && concurrently \"npm run dev\" \"npm run worker:dev\""
   },
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-scripts": "5.0.1"
+    "@ai-sdk/openai": "^2.0.76",
+    "@mastra/core": "^0.24.6",
+    "ajv": "^8.17.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.10.0",
+    "react-scripts": "^5.0.1",
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "wrangler": "^3.0.0"

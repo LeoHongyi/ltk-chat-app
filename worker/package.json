@@ -1,0 +1,20 @@
+{
+  "name": "ltk-mastra-agent",
+  "version": "1.0.0",
+  "description": "Mastra AI Agent Worker for Cloudflare",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "^2.0.76",
+    "@mastra/core": "^0.24.6",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}

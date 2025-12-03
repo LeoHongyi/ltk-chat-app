@@ -1,0 +1,19 @@
+name = "ltk-mastra-agent"
+main = "index.js"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Environment variables (set these in Cloudflare dashboard or via wrangler secret)
+# API_KEY = "your-openai-api-key"
+# MODEL = "gpt-4o-mini"
+
+[vars]
+MODEL = "gpt-4o-mini"
+
+# Observability settings
+[observability]
+enabled = true
+
+# Development settings
+[dev]
+port = 8787
