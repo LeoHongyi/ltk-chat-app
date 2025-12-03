@@ -1,14 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 // 预设主题
 const THEMES = [
-  { id: 'sharing', label: '学会分享', emoji: '🤝' },
-  { id: 'brave', label: '勇敢面对', emoji: '💪' },
-  { id: 'honest', label: '诚实守信', emoji: '🌟' },
-  { id: 'polite', label: '礼貌待人', emoji: '🙏' },
-  { id: 'environment', label: '爱护环境', emoji: '🌱' },
-  { id: 'friendship', label: '珍惜友谊', emoji: '💕' },
+  { id: 'sharing', label: '学会分享', emoji: '🤝', image: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400' },
+  { id: 'brave', label: '勇敢面对', emoji: '💪', image: 'https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=400' },
+  { id: 'honest', label: '诚实守信', emoji: '🌟', image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400' },
+  { id: 'polite', label: '礼貌待人', emoji: '🙏', image: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400' },
+  { id: 'environment', label: '爱护环境', emoji: '🌱', image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400' },
+  { id: 'friendship', label: '珍惜友谊', emoji: '💕', image: 'https://images.unsplash.com/photo-1491438590914-bc09fcaaf77a?w=400' },
 ];
 
 // 预设动物
@@ -23,10 +23,10 @@ const ANIMALS = [
 
 // Workflow 步骤
 const WORKFLOW_STEPS = [
-  { id: 'educator', name: '教育专家', emoji: '📚', description: '分析教育目标' },
-  { id: 'parallel', name: '创作团队', emoji: '✨', description: '故事、场景、互动设计' },
-  { id: 'safety', name: '安全审核', emoji: '🛡️', description: '内容安全检查' },
-  { id: 'narrator', name: '故事整合', emoji: '🎙️', description: '生成最终故事' },
+  { id: 'educator', name: '教育专家', emoji: '📚', description: '正在分析适合孩子的教育目标...' },
+  { id: 'parallel', name: '创作团队', emoji: '✨', description: '故事作家、插画师、游戏设计师协作中...' },
+  { id: 'safety', name: '安全审核', emoji: '🛡️', description: '确保内容适合儿童阅读...' },
+  { id: 'narrator', name: '故事整合', emoji: '🎙️', description: '正在润色和整合最终故事...' },
 ];
 
 function StoryWorkshopPage() {
@@ -38,8 +38,16 @@ function StoryWorkshopPage() {
   });
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(null);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [story, setStory] = useState(null);
   const [error, setError] = useState(null);
+  const [showForm, setShowForm] = useState(true);
+  const [progressPercent, setProgressPercent] = useState(0);
+  const [fadeIn, setFadeIn] = useState(false);
+
+  useEffect(() => {
+    setFadeIn(true);
+  }, []);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -54,17 +62,28 @@ function StoryWorkshopPage() {
     setLoading(true);
     setError(null);
     setStory(null);
+    setShowForm(false);
     setCurrentStep('educator');
+    setCurrentStepIndex(0);
+    setProgressPercent(0);
 
     try {
-      // 模拟步骤进度
       const steps = ['educator', 'parallel', 'safety', 'narrator'];
       let stepIndex = 0;
 
+      // 动画进度
       const progressInterval = setInterval(() => {
+        setProgressPercent(prev => {
+          if (prev >= 100) return 100;
+          return prev + 0.5;
+        });
+      }, 50);
+
+      const stepInterval = setInterval(() => {
         stepIndex++;
         if (stepIndex < steps.length) {
           setCurrentStep(steps[stepIndex]);
+          setCurrentStepIndex(stepIndex);
         }
       }, 3000);
 
@@ -80,6 +99,8 @@ function StoryWorkshopPage() {
       });
 
       clearInterval(progressInterval);
+      clearInterval(stepInterval);
+      setProgressPercent(100);
 
       const data = await response.json();
 
@@ -87,11 +108,16 @@ function StoryWorkshopPage() {
         throw new Error(data.error);
       }
 
-      setStory(data.story);
-      setCurrentStep(null);
+      // 延迟显示结果，让进度条完成
+      setTimeout(() => {
+        setStory(data.story);
+        setCurrentStep(null);
+        setLoading(false);
+      }, 500);
+
     } catch (err) {
       setError(err.message);
-    } finally {
+      setShowForm(true);
       setLoading(false);
     }
   };
@@ -100,239 +126,273 @@ function StoryWorkshopPage() {
     setStory(null);
     setError(null);
     setCurrentStep(null);
+    setShowForm(true);
+    setProgressPercent(0);
   };
 
+  const selectedTheme = THEMES.find(t => t.id === formData.theme);
+
   return (
-    <div className="story-workshop-page">
-      {/* 导航 */}
-      <nav className="nav">
-        <div className="nav-left">
-          <Link to="/" className="nav-circle">←</Link>
-          <span className="nav-page">故事创作工坊</span>
-        </div>
-        <div className="nav-right">
-          <span className="nav-badge">Multi-Agent Workflow</span>
-        </div>
+    <div className={`explorer-page ${fadeIn ? 'fade-in' : ''}`}>
+      {/* 导航栏 */}
+      <nav className="explorer-nav">
+        <Link to="/" className="explorer-logo">Storyteller</Link>
+        <button className="explorer-menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
       </nav>
 
       {/* 主内容 */}
-      <div className="workshop-container">
-        {!story ? (
-          <>
-            {/* 表单区域 */}
-            <div className="workshop-form-card">
-              <div className="form-header">
-                <h1>✨ AI 儿童故事创作工坊</h1>
-                <p>输入孩子的信息，AI 团队将协作创作专属教育故事</p>
-              </div>
-
-              <div className="form-body">
-                {/* 孩子名字 */}
-                <div className="form-group">
-                  <label>孩子的名字</label>
-                  <input
-                    type="text"
-                    placeholder="例如：小明"
-                    value={formData.childName}
-                    onChange={(e) => handleInputChange('childName', e.target.value)}
-                    disabled={loading}
-                  />
-                </div>
-
-                {/* 年龄 */}
-                <div className="form-group">
-                  <label>孩子的年龄</label>
-                  <div className="age-selector">
-                    {[3, 4, 5, 6, 7].map(age => (
-                      <button
-                        key={age}
-                        className={`age-btn ${formData.childAge === age ? 'active' : ''}`}
-                        onClick={() => handleInputChange('childAge', age)}
-                        disabled={loading}
-                      >
-                        {age}岁
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* 教育主题 */}
-                <div className="form-group">
-                  <label>教育主题</label>
-                  <div className="theme-grid">
-                    {THEMES.map(theme => (
-                      <button
-                        key={theme.id}
-                        className={`theme-btn ${formData.theme === theme.id ? 'active' : ''}`}
-                        onClick={() => handleInputChange('theme', theme.id)}
-                        disabled={loading}
-                      >
-                        <span className="theme-emoji">{theme.emoji}</span>
-                        <span className="theme-label">{theme.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* 喜欢的动物 */}
-                <div className="form-group">
-                  <label>喜欢的动物</label>
-                  <div className="animal-grid">
-                    {ANIMALS.map(animal => (
-                      <button
-                        key={animal.id}
-                        className={`animal-btn ${formData.favoriteAnimal === animal.id ? 'active' : ''}`}
-                        onClick={() => handleInputChange('favoriteAnimal', animal.id)}
-                        disabled={loading}
-                      >
-                        <span className="animal-emoji">{animal.emoji}</span>
-                        <span className="animal-label">{animal.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {error && <div className="form-error">{error}</div>}
-
-                <button
-                  className="generate-btn"
-                  onClick={generateStory}
-                  disabled={loading}
-                >
-                  {loading ? '创作中...' : '开始创作故事 ✨'}
-                </button>
-              </div>
-            </div>
-
-            {/* Workflow 进度 */}
+      <div className="explorer-content">
+        {/* 左侧大图 */}
+        <div className="explorer-hero">
+          <div
+            className="hero-image"
+            style={{
+              backgroundImage: selectedTheme
+                ? `url(${selectedTheme.image})`
+                : 'url(https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800)'
+            }}
+          >
+            <div className="hero-overlay"></div>
             {loading && (
-              <div className="workflow-progress">
-                <h3>AI 创作团队工作中...</h3>
-                <div className="workflow-steps">
-                  {WORKFLOW_STEPS.map((step, index) => {
-                    const stepIndex = WORKFLOW_STEPS.findIndex(s => s.id === currentStep);
-                    const isActive = step.id === currentStep;
-                    const isDone = index < stepIndex;
-
-                    return (
-                      <div
-                        key={step.id}
-                        className={`workflow-step ${isActive ? 'active' : ''} ${isDone ? 'done' : ''}`}
-                      >
-                        <div className="step-icon">
-                          {isDone ? '✓' : step.emoji}
-                        </div>
-                        <div className="step-info">
-                          <span className="step-name">{step.name}</span>
-                          <span className="step-desc">{step.description}</span>
-                        </div>
-                        {isActive && <div className="step-loading"></div>}
-                      </div>
-                    );
-                  })}
+              <div className="hero-loading">
+                <div className="loading-ring">
+                  <div className="ring-progress" style={{ '--progress': `${progressPercent}%` }}></div>
                 </div>
+                <span className="loading-percent">{Math.round(progressPercent)}%</span>
               </div>
             )}
-          </>
-        ) : (
-          /* 故事展示 */
-          <div className="story-result">
-            <div className="story-header">
-              <h1>{story.story?.title || '专属故事'}</h1>
-              <p>为 {story.childName}（{story.childAge}岁）创作</p>
-              <div className="story-meta">
-                <span className="meta-item">📚 主题：{story.theme}</span>
-                <span className="meta-item">🐾 角色：{story.favoriteAnimal}</span>
-                <span className="meta-item">⏱️ 阅读时间：{story.narration?.readingTime || '3-5'}分钟</span>
+          </div>
+          <div className="hero-nav">
+            <button className="hero-nav-btn prev">‹</button>
+            <button className="hero-nav-btn next">›</button>
+          </div>
+        </div>
+
+        {/* 右侧内容 */}
+        <div className="explorer-main">
+          {showForm && !story ? (
+            <div className="form-container slide-in">
+              <h1 className="explorer-title">
+                BECOME A STORY PRO IN
+                <br />
+                ONE EASY LESSON.
+              </h1>
+
+              <div className="author-info">
+                <div className="author-avatar">✨</div>
+                <div className="author-text">
+                  <span className="author-name">AI Story Workshop</span>
+                  <span className="author-role">Multi-Agent Storyteller</span>
+                </div>
               </div>
-            </div>
 
-            {/* 教育目标 */}
-            <div className="story-section goals-section">
-              <h3>🎯 教育目标</h3>
-              <div className="goals-list">
-                {story.educationGoals?.goals?.map((goal, i) => (
-                  <span key={i} className="goal-tag">{goal}</span>
-                ))}
-              </div>
-              {story.educationGoals?.values && (
-                <p className="values-text">
-                  价值观：{story.educationGoals.values.join('、')}
-                </p>
-              )}
-            </div>
+              <p className="explorer-desc">
+                输入孩子的信息，我们的 AI 创作团队将协作为您的孩子创作一个专属的教育故事。
+                每个故事都经过教育专家设计、创意团队打磨、安全审核确认。
+              </p>
 
-            {/* 故事内容 */}
-            <div className="story-section content-section">
-              <h3>📖 故事内容</h3>
-              {story.narration?.openingLine && (
-                <div className="opening-line">
-                  "{story.narration.openingLine}"
-                </div>
-              )}
-              {story.story?.chapters?.map((chapter, index) => (
-                <div key={index} className="chapter">
-                  <h4>{chapter.title}</h4>
-                  <p>{chapter.content}</p>
-                  {story.scenes?.scenes?.[index] && (
-                    <div className="scene-prompt">
-                      🎨 场景：{story.scenes.scenes[index].description}
-                    </div>
-                  )}
-                </div>
-              ))}
-              {story.narration?.closingLine && (
-                <div className="closing-line">
-                  "{story.narration.closingLine}"
-                </div>
-              )}
-            </div>
-
-            {/* 互动问答 */}
-            {story.interactions?.interactions && (
-              <div className="story-section interactions-section">
-                <h3>🎮 互动问答</h3>
-                {story.interactions.interactions.map((item, index) => (
-                  <div key={index} className="interaction-card">
-                    <p className="question">{item.question}</p>
-                    <div className="options">
-                      {item.options?.map((option, i) => (
+              {/* 表单 */}
+              <div className="explorer-form">
+                <div className="form-row">
+                  <div className="form-field">
+                    <label>孩子的名字</label>
+                    <input
+                      type="text"
+                      placeholder="请输入名字"
+                      value={formData.childName}
+                      onChange={(e) => handleInputChange('childName', e.target.value)}
+                      className="explorer-input"
+                    />
+                  </div>
+                  <div className="form-field">
+                    <label>年龄</label>
+                    <div className="age-buttons">
+                      {[3, 4, 5, 6, 7].map(age => (
                         <button
-                          key={i}
-                          className={`option-btn ${i === item.correctAnswer ? 'correct' : ''}`}
+                          key={age}
+                          className={`age-btn ${formData.childAge === age ? 'active' : ''}`}
+                          onClick={() => handleInputChange('childAge', age)}
                         >
-                          {String.fromCharCode(65 + i)}. {option}
+                          {age}
                         </button>
                       ))}
                     </div>
-                    <p className="explanation">💡 {item.explanation}</p>
+                  </div>
+                </div>
+
+                {/* 主题选择 - 图片卡片 */}
+                <div className="form-field">
+                  <label>选择教育主题</label>
+                  <div className="theme-gallery">
+                    {THEMES.map((theme, index) => (
+                      <div
+                        key={theme.id}
+                        className={`theme-card ${formData.theme === theme.id ? 'active' : ''}`}
+                        onClick={() => handleInputChange('theme', theme.id)}
+                        style={{ animationDelay: `${index * 0.1}s` }}
+                      >
+                        <div
+                          className="theme-image"
+                          style={{ backgroundImage: `url(${theme.image})` }}
+                        >
+                          {formData.theme === theme.id && (
+                            <div className="theme-check">
+                              <span className="play-icon">▶</span>
+                            </div>
+                          )}
+                        </div>
+                        <span className="theme-label">{theme.emoji} {theme.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 动物选择 */}
+                <div className="form-field">
+                  <label>喜欢的动物角色</label>
+                  <div className="animal-pills">
+                    {ANIMALS.map(animal => (
+                      <button
+                        key={animal.id}
+                        className={`animal-pill ${formData.favoriteAnimal === animal.id ? 'active' : ''}`}
+                        onClick={() => handleInputChange('favoriteAnimal', animal.id)}
+                      >
+                        <span className="animal-emoji">{animal.emoji}</span>
+                        <span className="animal-name">{animal.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {error && <div className="explorer-error">{error}</div>}
+
+                <button className="explorer-btn" onClick={generateStory}>
+                  开始创作故事 →
+                </button>
+              </div>
+            </div>
+          ) : loading ? (
+            /* 加载中状态 */
+            <div className="loading-container fade-in">
+              <h2 className="loading-title">AI 创作团队工作中</h2>
+              <p className="loading-subtitle">正在为 {formData.childName} 创作专属故事...</p>
+
+              <div className="workflow-timeline">
+                {WORKFLOW_STEPS.map((step, index) => (
+                  <div
+                    key={step.id}
+                    className={`timeline-item ${index <= currentStepIndex ? 'active' : ''} ${index < currentStepIndex ? 'done' : ''}`}
+                    style={{ animationDelay: `${index * 0.2}s` }}
+                  >
+                    <div className="timeline-dot">
+                      {index < currentStepIndex ? '✓' : step.emoji}
+                    </div>
+                    <div className="timeline-content">
+                      <span className="timeline-name">{step.name}</span>
+                      <span className="timeline-desc">{step.description}</span>
+                    </div>
+                    {index === currentStepIndex && (
+                      <div className="timeline-spinner"></div>
+                    )}
                   </div>
                 ))}
               </div>
-            )}
 
-            {/* 安全审核 */}
-            {story.safetyReview && (
-              <div className="story-section safety-section">
-                <h3>🛡️ 安全审核</h3>
-                <div className={`safety-badge ${story.safetyReview.approved ? 'approved' : 'warning'}`}>
-                  {story.safetyReview.approved ? '✓ 内容安全' : '⚠️ 需要注意'}
-                  <span className="safety-score">安全评分：{story.safetyReview.safetyScore}/10</span>
+              <div className="progress-bar">
+                <div
+                  className="progress-fill"
+                  style={{ width: `${progressPercent}%` }}
+                ></div>
+              </div>
+            </div>
+          ) : story ? (
+            /* 故事结果 */
+            <div className="story-container fade-in">
+              <div className="story-header-section">
+                <h1 className="story-title">{story.story?.title || '专属故事'}</h1>
+                <div className="story-meta-row">
+                  <div className="author-info">
+                    <div className="author-avatar">{ANIMALS.find(a => a.label === story.favoriteAnimal)?.emoji || '📖'}</div>
+                    <div className="author-text">
+                      <span className="author-name">{story.childName}的专属故事</span>
+                      <span className="author-role">{story.childAge}岁 · {story.theme}</span>
+                    </div>
+                  </div>
+                  <button className="bookmark-btn">🔖</button>
                 </div>
               </div>
-            )}
 
-            {/* 操作按钮 */}
-            <div className="story-actions">
-              <button className="action-btn primary" onClick={resetForm}>
-                创作新故事
-              </button>
-              <button className="action-btn secondary" onClick={() => window.print()}>
-                打印故事
-              </button>
+              <p className="story-intro">
+                {story.narration?.openingLine || '从前，在一个美丽的地方...'}
+              </p>
+
+              {/* 章节卡片 */}
+              <div className="chapter-gallery">
+                {story.story?.chapters?.map((chapter, index) => (
+                  <div
+                    key={index}
+                    className="chapter-card"
+                    style={{ animationDelay: `${index * 0.15}s` }}
+                  >
+                    <div
+                      className="chapter-image"
+                      style={{
+                        backgroundImage: `url(${THEMES.find(t => t.label === story.theme)?.image || THEMES[index % THEMES.length].image})`
+                      }}
+                    >
+                      <span className="chapter-number">Chapter {index + 1}</span>
+                    </div>
+                    <div className="chapter-content">
+                      <h4>{chapter.title}</h4>
+                      <p>{chapter.content}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* 互动问答 */}
+              {story.interactions?.interactions && (
+                <div className="interaction-section">
+                  <h3>🎮 互动问答</h3>
+                  {story.interactions.interactions.map((item, index) => (
+                    <div key={index} className="qa-card">
+                      <p className="qa-question">{item.question}</p>
+                      <div className="qa-options">
+                        {item.options?.map((option, i) => (
+                          <button
+                            key={i}
+                            className={`qa-option ${i === item.correctAnswer ? 'correct' : ''}`}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* 结尾 */}
+              {story.narration?.closingLine && (
+                <p className="story-ending">"{story.narration.closingLine}"</p>
+              )}
+
+              {/* 操作按钮 */}
+              <div className="story-actions-row">
+                <button className="action-btn-dark" onClick={resetForm}>
+                  创作新故事
+                </button>
+                <button className="action-btn-light" onClick={() => window.print()}>
+                  打印故事
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          ) : null}
+        </div>
       </div>
     </div>
   );
